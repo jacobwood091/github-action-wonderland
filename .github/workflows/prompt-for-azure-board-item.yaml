@@ -1,71 +1,112 @@
-name: Azure Board Item Validator
+name: Azure Board Reference Check
 
 on:
     pull_request:
         types: [opened, edited, ready_for_review, reopened]
 
 jobs:
-    validate-azure-board-item:
+    check-for-azure-board-item:
         runs-on: ubuntu-latest
         permissions:
-            checks: write
+            statuses: write
             pull-requests: write
             contents: read
         steps:
-            - name: Check for Azure Board Association
+            - name: Check for Azure Board Reference
               uses: actions/github-script@v7
               with:
                   script: |
-                      const checkName = 'Azure Board Association';
-
                       // Skip validation for draft PRs
                       if (context.payload.pull_request.draft) {
+                        console.log('⏭️ Skipping check for draft PR');
                         return;
                       }
 
+                      const { owner, repo } = context.repo;
+                      const pull_number = context.payload.pull_request.number;
                       const description = context.payload.pull_request.body || '';
 
                       // Check for AB number
                       const abRegex = /AB#\d+/;
                       const hasABNumber = abRegex.test(description);
+                      const abMatch = description.match(abRegex);
 
                       // Check for "no-ab" override in description
                       const hasOverride = /\bno-ab\b/i.test(description);
 
-                      let conclusion, checkTitle, summary;
+                      const sha = context.payload.pull_request.head.sha;
+                      const statusContext = 'Azure Board Reference';
 
                       if (hasABNumber) {
-                        conclusion = 'success';
-                        checkTitle = '✅ Azure Board item found';
-                        summary = 'Found Azure Board reference in PR description.';
+                        // Success case
+                        await github.rest.repos.createCommitStatus({
+                          owner,
+                          repo,
+                          sha,
+                          state: 'success',
+                          description: `Found Azure Board reference: ${abMatch[0]}`,
+                          context: statusContext
+                        });
+                        
+                        console.log('✅ Azure Board item found:', abMatch[0]);
+                        
                       } else if (hasOverride) {
-                        conclusion = 'success';
-                        checkTitle = '✅ Override applied (no-ab)';
-                        summary = 'Azure Board check bypassed via "no-ab" in PR description.';
+                        // Override case
+                        await github.rest.repos.createCommitStatus({
+                          owner,
+                          repo,
+                          sha,
+                          state: 'success',
+                          description: 'Check bypassed using "no-ab" override',
+                          context: statusContext
+                        });
+                        
+                        console.log('✅ Override applied (no-ab)');
+                        
                       } else {
-                        conclusion = 'failure';
-                        checkTitle = '❌ Azure Board item required';
-                        summary = `
-                        No Azure Board item was found in the PR description.
-                        
-                        **Required Action:**
-                        Please add an Azure Board reference in the format \`AB#<number>\` to your PR description.
-                        
-                        **Override Option:**
-                        If the reference is not needed, add "no-ab" to your PR description to skip this check.
-                        `;
-                      }
+                        // Failure case
+                        await github.rest.repos.createCommitStatus({
+                          owner,
+                          repo,
+                          sha,
+                          state: 'failure',
+                          description: 'Add "AB#1234" to PR description or "no-ab" to bypass',
+                          context: statusContext
+                        });
 
-                      // Create or update the check
-                      await github.rest.checks.create({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        name: checkName,
-                        head_sha: context.payload.pull_request.head.sha,
-                        status: 'completed',
-                        conclusion: conclusion,
-                        output: {
-                          title: checkTitle,
-                          summary: summary
+                        // Add a helpful comment to the PR for failure cases
+                        const commentBody = [
+                          '## Azure Board Reference Required',
+                          '',
+                          'This pull request needs an Azure Board work item reference.',
+                          '',
+                          '**To resolve:** Add `AB#1234` to your PR description (replace with your work item number)',
+                          '',
+                          '**No work item needed?** Add `no-ab` to bypass this check',
+                          '',
+                          'This requirement helps maintain project traceability. Thanks! 🙂'
+                        ].join('\n');
+
+                        // Check if we already commented to avoid spam
+                        const { data: comments } = await github.rest.issues.listComments({
+                          owner,
+                          repo,
+                          issue_number: pull_number,
+                        });
+
+                        const botComment = comments.find(comment => 
+                          comment.user.type === 'Bot' && 
+                          comment.body.includes('Azure Board Reference Required')
+                        );
+
+                        if (!botComment) {
+                          await github.rest.issues.createComment({
+                            owner,
+                            repo,
+                            issue_number: pull_number,
+                            body: commentBody
+                          });
                         }
-                      });
+                        
+                        console.log('❌ Azure Board item required - Status and comment created');
+                      }
