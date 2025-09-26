@@ -9,5 +9,10 @@ on:
 jobs:
   azure-board-validation:
     uses: jacobwood091/azure-board-reference-check/.github/workflows/prompt-for-azure-board-item.yaml@main
+    permissions:
+      checks: write
+      pull-requests: read
+      contents: read
+
     with:
       skip-drafts: true
