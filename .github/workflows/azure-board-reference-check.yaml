@@ -1,12 +1,11 @@
-name: Azure Board Reference Check
+name: Azure Board Item Reference Check
 
 on:
   pull_request:
     types: [opened, edited, ready_for_review, reopened]
 
 jobs:
-  azure-board-check-reference-check:
-    name: Azure Board Reference Check
+  azure-board-reference-check:
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -14,7 +13,6 @@ jobs:
       contents: read
     steps:
       - name: Validate Azure Board References
-        uses: jacobwood091/azure-board-reference-check@v1
+        uses: jacobwood091/azure-board-reference-check@main
         with:
           skip-drafts: true
-        continue-on-error: true
