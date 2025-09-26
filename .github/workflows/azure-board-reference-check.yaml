@@ -14,7 +14,7 @@ jobs:
       contents: read
     steps:
       - name: Validate Azure Board References
-        uses: jacobwood091/azure-board-reference-check@v1
+        uses: jacobwood091/azure-board-reference-check@main
         with:
           skip-drafts: true
         continue-on-error: true
