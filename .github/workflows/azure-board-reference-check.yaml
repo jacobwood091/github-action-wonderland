@@ -1,0 +1,13 @@
+# Example: How other repositories can use this reusable workflow
+
+name: Azure Board Item Reference Check
+
+on:
+  pull_request:
+    types: [opened, edited, ready_for_review, reopened]
+
+jobs:
+  azure-board-validation:
+    uses: jacobwood091/azure-board-reference-check/.github/workflows/prompt-for-azure-board-item.yaml@main
+    with:
+      skip-drafts: true
