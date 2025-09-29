@@ -1,11 +1,11 @@
-name: Azure Board Reference Check
+name: Trigger Azure Board Reference Check
 
 on:
   pull_request:
     types: [opened, edited, ready_for_review, reopened]
 
 jobs:
-  azure-board-reference-check:
+  trigger-azure-board-reference-check:
     runs-on: ubuntu-latest
     permissions:
       checks: write
