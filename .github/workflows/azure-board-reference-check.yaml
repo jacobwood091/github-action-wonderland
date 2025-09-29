@@ -8,6 +8,7 @@ jobs:
   azure-board-reference-check:
     runs-on: ubuntu-latest
     permissions:
+      checks: write
       pull-requests: read
       contents: read
     steps:
