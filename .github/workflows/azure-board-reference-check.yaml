@@ -1,4 +1,4 @@
-name: Azure Board Item Reference Check
+name: Azure Board Reference
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
       pull-requests: read
       contents: read
     steps:
-      - name: Validate Azure Board References
+      - name: Check for Azure Board Reference
         uses: jacobwood091/azure-board-reference-check@main
         with:
           skip-drafts: true
