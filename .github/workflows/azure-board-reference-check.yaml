@@ -1,4 +1,4 @@
-name: Azure Board Reference
+name: Azure Board Reference Check
 
 on:
   pull_request:
@@ -8,7 +8,6 @@ jobs:
   azure-board-reference-check:
     runs-on: ubuntu-latest
     permissions:
-      checks: write
       pull-requests: read
       contents: read
     steps:
